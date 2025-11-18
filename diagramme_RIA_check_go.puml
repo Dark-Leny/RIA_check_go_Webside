@@ -1,0 +1,70 @@
+@startuml diagramme
+left to right direction
+
+title Application de vérification de comformité
+
+actor "Utilisateur" as user
+
+usecase "Démarrer diagnostic"
+usecase "Remplir informations entreprise"
+usecase "Répondre au questionnaire"
+usecase "Calculer les résultats"
+usecase "Afficher les résultats"
+usecase "Télécharger rapport PDF"
+usecase "Demander un devis"
+usecase "Réinitialiser le diagnostic"
+usecase "Détecter pratiques interdites"
+usecase "Afficher obligations réglementaires"
+usecase "Saisir informations contact"
+
+user --> "Démarrer diagnostic"
+user --> "Remplir informations entreprise"
+user --> "Répondre au questionnaire"
+user --> "Afficher les résultats"
+user --> "Télécharger rapport PDF"
+user --> "Demander un devis"
+user --> "Réinitialiser le diagnostic"
+
+"Répondre au questionnaire" --> "Calculer les résultats" <<include>>
+"Calculer les résultats" --> "Détecter pratiques interdites" <<extend>>
+"Afficher les résultats" --> "Afficher obligations réglementaires" <<extend>>
+"Afficher les résultats" --> "Télécharger rapport PDF" <<include>>
+"Afficher les résultats" --> "Demander un devis" <<include>>
+"Demander un devis" --> "Saisir informations contact" <<extend>>
+
+' Diagramme de Séquence – Démarrer un diagnostic
+
+' user -> Interface : Cliquer "Commencer le diagnostic"
+' Interface -> Système : initialiserDiagnostic()
+' Système -> Système : reset(formData, questions)
+' Système -> Interface : afficherÉcranInformationsEntreprise()
+
+' ' Diagramme de Séquence – Remplir les informations de l’entreprise
+
+' user -> Interface : saisirNomEntreprise()
+' Interface -> Système : enregistrerNom()
+
+' user -> Interface : sélectionnerSecteur()
+' Interface -> Système : enregistrerSecteur()
+
+' user -> Interface : saisirTypeIA()
+' Interface -> Système : enregistrerTypeIA()
+
+' user -> Interface : cliquer Continuer
+' Interface -> Système : validerDonnéesEntreprise()
+' Système -> Interface : afficherPremièreQuestion()
+
+' ' Diagramme de Séquence – Répondre au questionnaire
+
+' user -> Interface : choisirRéponse(question)
+' Interface -> Système : enregistrerRéponse(qID, réponse)
+' Système -> Système : avancerQuestionSuivante()
+
+' alt dernière question
+'    Système -> Système : calculerRésultats()   <<include>>
+'    Système -> Interface : afficherBoutonVoirRésultats()
+' else autre question
+'    Système -> Interface : afficherQuestionSuivante()
+' end
+
+@enduml
