@@ -1,64 +1,610 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RIA Check & Go</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" />
-<script src="script.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RIA Check & Go — Diagnostic</title>
+
+  <!-- Tailwind via CDN (dev mode) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- jsPDF pour générer le PDF du rapport -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    /* petites adaptations visuelles */
+    .rounded-3xl { border-radius: 1.5rem; }
+    .shadow-xl { box-shadow: 0 12px 24px rgba(16,24,40,0.08); }
+    .progress-transition { transition: width .5s ease; }
+  </style>
 </head>
-<body class="bg-gray-100">
-  <header class="bg-indigo-700 text-white p-4 shadow-lg">
-    <h1 class="text-2xl font-bold">RIA Check & Go (Version HTML)</h1>
-    <p class="text-indigo-200 text-sm">Simplifié sans React</p>
-  </header>
+<body class="font-sans bg-gradient-to-br from-indigo-50 to-blue-100 min-h-screen">
 
-  <main class="max-w-4xl mx-auto p-6">
-    <section class="bg-white p-6 rounded-xl shadow mb-6">
-      <h2 class="text-xl font-semibold mb-4">Bienvenue</h2>
-      <p>Cette version HTML est une adaptation statique du composant React fourni.</p>
-      <p class="mt-2">Les interactions (diagnostic, navigation...) ne sont pas fonctionnelles sans JavaScript.</p>
+  <!-- NAV -->
+  <nav class="bg-indigo-700 text-white p-4 shadow-lg sticky top-0 z-20">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-indigo-600 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-0.99L12 2z" />
+          </svg>
+        </div>
+        <div>
+          <div class="text-lg font-bold">RIA Check &amp; Go</div>
+          <div class="text-xs text-indigo-200">by Webside</div>
+        </div>
+      </div>
+
+      <div class="hidden md:flex space-x-4">
+        <button class="nav-btn hover:text-indigo-200" data-screen="home">Accueil</button>
+        <button class="nav-btn hover:text-indigo-200" data-screen="diagnostic">Diagnostic</button>
+        <button class="nav-btn hover:text-indigo-200" data-screen="about">À propos</button>
+      </div>
+
+      <div class="md:hidden">
+        <button id="menuToggle" class="p-2">☰</button>
+      </div>
+    </div>
+
+    <div id="mobileMenu" class="md:hidden hidden mt-3 space-y-2">
+      <button class="block w-full text-left py-2 px-3 nav-btn" data-screen="home">Accueil</button>
+      <button class="block w-full text-left py-2 px-3 nav-btn" data-screen="diagnostic">Diagnostic</button>
+      <button class="block w-full text-left py-2 px-3 nav-btn" data-screen="about">À propos</button>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto p-6">
+
+    <!-- HOME -->
+    <section id="screen-home" class="screen">
+      <div class="bg-white rounded-3xl shadow-xl p-8 mb-6">
+        <div class="text-center">
+          <div class="inline-block p-4 bg-indigo-100 rounded-full mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14 2 9.27l6.91-0.99L12 2z" />
+            </svg>
+          </div>
+          <h1 class="text-3xl font-bold text-gray-800 mb-2">Bienvenue sur RIA Check &amp; Go</h1>
+          <p class="text-gray-600 mb-6">Votre assistant pour évaluer rapidement la conformité au Règlement sur l'IA (AI Act).</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+          <div class="p-6 bg-indigo-50 rounded-xl">
+            <div class="text-indigo-600 text-2xl mb-2">📊</div>
+            <h3 class="font-semibold text-gray-800 mb-2">Diagnostic Rapide</h3>
+            <p class="text-sm text-gray-600">Évaluez le risque de votre système d'IA en quelques minutes.</p>
+          </div>
+          <div class="p-6 bg-green-50 rounded-xl">
+            <div class="text-green-600 text-2xl mb-2">📄</div>
+            <h3 class="font-semibold text-gray-800 mb-2">Rapport</h3>
+            <p class="text-sm text-gray-600">Téléchargez un rapport PDF avec vos résultats.</p>
+          </div>
+          <div class="p-6 bg-purple-50 rounded-xl">
+            <div class="text-purple-600 text-2xl mb-2">🛡️</div>
+            <h3 class="font-semibold text-gray-800 mb-2">Accompagnement</h3>
+            <p class="text-sm text-gray-600">Obtenez un devis pour l'accompagnement à la conformité.</p>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-6 text-white mb-6">
+          <h3 class="text-2xl font-bold mb-2">Pourquoi la conformité RIA est essentielle ?</h3>
+          <ul class="space-y-2">
+            <li class="flex items-start"><span class="mr-2">✅</span> Évitez des amendes importantes</li>
+            <li class="flex items-start"><span class="mr-2">✅</span> Garantissez la confiance de vos utilisateurs</li>
+            <li class="flex items-start"><span class="mr-2">✅</span> Préparez votre dossier technique</li>
+          </ul>
+        </div>
+
+        <div class="flex gap-4">
+          <button id="startDiag" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2">
+            Commencer le diagnostic gratuit →
+          </button>
+          <button id="aboutBtn" class="flex-1 bg-white border border-indigo-200 text-indigo-700 py-3 px-4 rounded-xl">À propos</button>
+        </div>
+      </div>
+
+      <div class="text-center text-gray-600 text-sm">Développé par Webside - Expert en conformité réglementaire</div>
     </section>
 
-    <section class="bg-white p-6 rounded-xl shadow mb-6">
-      <h3 class="text-lg font-semibold mb-4">Formulaire d'entreprise</h3>
-      <label class="block mb-2">Nom de l'entreprise :</label>
-      <input type="text" class="w-full p-2 border rounded mb-4" />
+    <!-- DIAGNOSTIC -->
+    <section id="screen-diagnostic" class="screen hidden">
+      <div class="bg-white rounded-3xl shadow-xl p-8 mb-6">
+        <!-- Progress -->
+        <div class="mb-6">
+          <div class="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Progression</span>
+            <span id="progressPct">0%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-3">
+            <div id="progressBar" class="bg-indigo-600 h-3 rounded-full progress-transition" style="width:0%"></div>
+          </div>
+        </div>
 
-      <label class="block mb-2">Secteur d'activité </label>
-      <select class="w-full p-2 border rounded mb-4">
-        <option>Sélectionnez...</option>
-        <option>Santé</option>
-        <option>Finance</option>
-        <option>Transport</option>
-        <option>Éducation</option>
-        <option>Autre</option>
-      </select>
+        <!-- Container dynamique -->
+        <div id="diagContainer"></div>
+      </div>
 
-      <label class="block mb-2">Type d'IA :</label>
-      <input type="text" class="w-full p-2 border rounded mb-4" />
-
-      <button class="w-full bg-indigo-600 text-white py-2 rounded">Continuer</button>
-    </section>
-
-    <section class="bg-white p-6 rounded-xl shadow mb-6">
-      <h3 class="text-lg font-semibold mb-4">Exemple de question</h3>
-      <p class="mb-3">Votre système traite-t-il des données biométriques ?</p>
-
-      <div class="space-y-2">
-        <button class="w-full p-3 border rounded hover:bg-green-100">Oui</button>
-        <button class="w-full p-3 border rounded hover:bg-red-100">Non</button>
-        <button class="w-full p-3 border rounded hover:bg-gray-100">Je ne sais pas</button>
+      <div class="text-center">
+        <button id="backHomeFromDiag" class="text-indigo-600 hover:text-indigo-800 font-medium">← Retour à l'accueil</button>
       </div>
     </section>
 
-    <section class="bg-white p-6 rounded-xl shadow mb-6">
-      <h3 class="text-lg font-semibold mb-4">Résultat (exemple statique)</h3>
-      <div class="text-center p-6 bg-yellow-100 rounded-xl">
-        <p class="text-4xl font-bold">75/100</p>
-        <p class="text-lg font-semibold mt-2 text-yellow-700">Risque Modéré</p>
+    <!-- RESULTS -->
+    <section id="screen-results" class="screen hidden">
+      <div class="bg-white rounded-3xl shadow-xl p-8 mb-6">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Résultats de votre diagnostic</h2>
+
+        <div class="text-center mb-6" id="scoreBlock"></div>
+
+        <div id="blockersBlock"></div>
+
+        <div id="obligationsBlock" class="space-y-4 my-6"></div>
+
+        <div class="flex gap-4">
+          <button id="downloadPdf" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg">📥 Télécharger le rapport PDF</button>
+          <button id="requestQuote" class="flex-1 bg-white border border-indigo-200 text-indigo-700 py-3 px-4 rounded-lg">✉️ Demander un devis</button>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <button id="resetBtn" class="text-indigo-600 hover:text-indigo-800 font-medium">← Recommencer un nouveau diagnostic</button>
       </div>
     </section>
+
+    <!-- ABOUT -->
+    <section id="screen-about" class="screen hidden">
+      <div class="bg-white rounded-3xl shadow-xl p-8 mb-6">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">À propos de RIA Check &amp; Go</h2>
+        <p class="text-gray-700 mb-4"><strong>Webside</strong> propose un outil simple pour évaluer les risques réglementaires liés aux systèmes d'IA et générer un rapport.</p>
+        <h3 class="text-xl font-semibold mt-4">Services</h3>
+        <ul class="list-disc list-inside text-gray-700 space-y-2 mt-2">
+          <li>Audit de conformité RIA</li>
+          <li>Accompagnement à la mise en conformité</li>
+          <li>Formation des équipes</li>
+          <li>Support technique et juridique</li>
+        </ul>
+      </div>
+
+      <div class="text-center">
+        <button class="text-indigo-600 hover:text-indigo-800 font-medium" id="backHomeFromAbout">← Retour à l'accueil</button>
+      </div>
+    </section>
+
   </main>
+
+  <script>
+  // ----------------------------
+  // Données & état
+  // ----------------------------
+  const diagnosticQuestions = [
+    { id: 'q1', question: "Votre système d'IA utilise-t-il des techniques de manipulation subliminale ?", category: 'interdiction', risk: 'inacceptable' },
+    { id: 'q2', question: "Votre système d'IA est-il utilisé dans un contexte critique (santé, transports, éducation) ?", category: 'risque_eleve', risk: 'high' },
+    { id: 'q3', question: "Votre système traite-t-il des données biométriques ?", category: 'donnees_sensibles', risk: 'high' },
+    { id: 'q4', question: "Votre système interagit-il directement avec des utilisateurs sans supervision humaine ?", category: 'transparence', risk: 'medium' },
+    { id: 'q5', question: "Disposez-vous d'une documentation technique complète de votre système ?", category: 'documentation', risk: 'compliance' }
+  ];
+
+  let state = {
+    currentScreen: 'home',
+    menuOpen: false,
+    formData: {
+      companyName: '',
+      sector: '',
+      aiType: '',
+      riskAnswers: {}, // qid -> 'yes'/'no'/'unknown'
+      contactName: '',
+      email: '',
+      phone: ''
+    },
+    diagnosticStep: 0 // 0 = company info ; 1..n = questions ; n+1 = review/results-button
+  };
+
+  // ----------------------------
+  // Utilitaires
+  // ----------------------------
+  function $(sel) { return document.querySelector(sel); }
+  function $all(sel) { return Array.from(document.querySelectorAll(sel)); }
+
+  function showScreen(screenId) {
+    state.currentScreen = screenId;
+    $all('.screen').forEach(s => s.classList.add('hidden'));
+    const el = document.getElementById(`screen-${screenId}`);
+    if (el) el.classList.remove('hidden');
+    // close mobile menu
+    document.getElementById('mobileMenu').classList.add('hidden');
+  }
+
+  // ----------------------------
+  // Navigation / menu
+  // ----------------------------
+  $all('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const s = e.currentTarget.getAttribute('data-screen');
+      showScreen(s);
+      render();
+    });
+  });
+
+  document.getElementById('menuToggle').addEventListener('click', () => {
+    const mm = document.getElementById('mobileMenu');
+    mm.classList.toggle('hidden');
+  });
+
+  // Home buttons
+  document.getElementById('startDiag').addEventListener('click', () => {
+    state.diagnosticStep = 0;
+    showScreen('diagnostic');
+    render();
+  });
+  document.getElementById('aboutBtn').addEventListener('click', () => { showScreen('about'); render(); });
+  document.getElementById('backHomeFromAbout').addEventListener('click', () => { showScreen('home'); render(); });
+  document.getElementById('backHomeFromDiag').addEventListener('click', () => { showScreen('home'); render(); });
+
+  // Reset after results
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    state.formData = { companyName:'', sector:'', aiType:'', riskAnswers:{}, contactName:'', email:'', phone:'' };
+    state.diagnosticStep = 0;
+    showScreen('home');
+    render();
+  });
+
+  // ----------------------------
+  // Calcul du score (même logique que dans le TSX)
+  // ----------------------------
+  function calculateRiskScore() {
+    const answers = state.formData.riskAnswers;
+    let score = 0;
+    let riskLevel = 'minimal';
+    let blockers = [];
+
+    diagnosticQuestions.forEach(q => {
+      if (answers[q.id] === 'yes') {
+        if (q.risk === 'inacceptable') {
+          blockers.push('Pratiques interdites détectées (Art. 5 RIA)');
+          riskLevel = 'inacceptable';
+        } else if (q.risk === 'high') {
+          score += 30;
+          if (riskLevel !== 'inacceptable') riskLevel = 'high';
+        } else if (q.risk === 'medium') {
+          score += 15;
+          if (riskLevel === 'minimal') riskLevel = 'medium';
+        }
+      }
+      if (answers[q.id] === 'no' && q.risk === 'compliance') {
+        score -= 20;
+      }
+    });
+
+    score = Math.min(100, Math.max(0, score));
+    return { score, riskLevel, blockers };
+  }
+
+  // ----------------------------
+  // Render Diagnostic container
+  // ----------------------------
+  function renderDiagnostic() {
+    const container = document.getElementById('diagContainer');
+    container.innerHTML = '';
+
+    const totalSteps = diagnosticQuestions.length + 2; // company info + questions + review step
+    const progress = Math.round(((state.diagnosticStep + 1) / totalSteps) * 100);
+    document.getElementById('progressBar').style.width = progress + '%';
+    document.getElementById('progressPct').textContent = progress + '%';
+
+    if (state.diagnosticStep === 0) {
+      // company info
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Informations sur votre entreprise</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nom de l'entreprise *</label>
+            <input id="companyName" type="text" value="${escapeHtml(state.formData.companyName)}" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Votre entreprise" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Secteur d'activité *</label>
+            <select id="sector" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+              <option value="">Sélectionnez...</option>
+              <option value="sante">Santé</option>
+              <option value="finance">Finance</option>
+              <option value="transport">Transport</option>
+              <option value="education">Éducation</option>
+              <option value="autre">Autre</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Type de système d'IA</label>
+            <input id="aiType" type="text" value="${escapeHtml(state.formData.aiType)}" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Ex: Système de recommandation, Analyse prédictive..." />
+          </div>
+        </div>
+        <button id="companyContinue" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-semibold py-3 px-6 rounded-lg">Continuer</button>
+      `;
+      container.appendChild(div);
+
+      // set existing sector if present
+      if (state.formData.sector) {
+        div.querySelector('#sector').value = state.formData.sector;
+      }
+
+      // events
+      div.querySelector('#companyName').addEventListener('input', (e) => state.formData.companyName = e.target.value);
+      div.querySelector('#sector').addEventListener('change', (e) => state.formData.sector = e.target.value);
+      div.querySelector('#aiType').addEventListener('input', (e) => state.formData.aiType = e.target.value);
+
+      div.querySelector('#companyContinue').addEventListener('click', () => {
+        if (!state.formData.companyName || !state.formData.sector) {
+          alert("Veuillez saisir le nom de l'entreprise et sélectionner le secteur d'activité.");
+          return;
+        }
+        state.diagnosticStep = 1;
+        render();
+      });
+    } else if (state.diagnosticStep > 0 && state.diagnosticStep <= diagnosticQuestions.length) {
+      // question step
+      const qIndex = state.diagnosticStep - 1;
+      const q = diagnosticQuestions[qIndex];
+
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <div class="mb-4">
+          <span class="text-sm text-indigo-600 font-semibold">Question ${state.diagnosticStep}/${diagnosticQuestions.length}</span>
+          <h2 class="text-xl font-bold text-gray-800 mt-2">${escapeHtml(q.question)}</h2>
+        </div>
+        <div class="space-y-3">
+          <button data-answer="yes" class="w-full p-4 border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 rounded-lg text-left transition-all">Oui</button>
+          <button data-answer="no" class="w-full p-4 border-2 border-gray-300 hover:border-red-500 hover:bg-red-50 rounded-lg text-left transition-all">Non</button>
+          <button data-answer="unknown" class="w-full p-4 border-2 border-gray-300 hover:border-gray-500 hover:bg-gray-50 rounded-lg text-left transition-all">Je ne sais pas</button>
+        </div>
+        <button id="prevQ" class="mt-6 text-indigo-600 hover:text-indigo-800 font-medium">← Retour</button>
+      `;
+      container.appendChild(div);
+
+      div.querySelectorAll('button[data-answer]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.formData.riskAnswers[q.id] = btn.getAttribute('data-answer');
+          // small delay for UX
+          setTimeout(() => {
+            state.diagnosticStep = state.diagnosticStep + 1;
+            render();
+          }, 200);
+        });
+      });
+
+      div.querySelector('#prevQ').addEventListener('click', () => {
+        state.diagnosticStep = Math.max(0, state.diagnosticStep - 1);
+        render();
+      });
+
+    } else {
+      // final step: show button to view results
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <div class="text-center">
+          <h2 class="text-2xl font-bold text-gray-800 mb-4">Questionnaire terminé</h2>
+          <p class="text-gray-600 mb-4">Cliquez pour voir les résultats de votre diagnostic.</p>
+          <button id="viewResults" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg">Voir mes résultats</button>
+        </div>
+      `;
+      container.appendChild(div);
+
+      div.querySelector('#viewResults').addEventListener('click', () => {
+        showScreen('results');
+        renderResults();
+      });
+    }
+  }
+
+  // ----------------------------
+  // Render Results
+  // ----------------------------
+  function renderResults() {
+    const { score, riskLevel, blockers } = calculateRiskScore();
+
+    const riskConfig = {
+      inacceptable: { color: 'red', label: 'Inacceptable', icon: '⛔' },
+      high: { color: 'orange', label: 'Élevé', icon: '🔴' },
+      medium: { color: 'yellow', label: 'Modéré', icon: '🟡' },
+      minimal: { color: 'green', label: 'Minimal', icon: '🟢' }
+    };
+    const config = riskConfig[riskLevel] || riskConfig.minimal;
+
+    // Score block
+    const scoreBlock = document.getElementById('scoreBlock');
+    scoreBlock.innerHTML = `
+      <div class="inline-block p-8 bg-${config.color}-100 rounded-3xl mb-4 text-center">
+        <div class="text-6xl mb-2">${config.icon}</div>
+        <div class="text-4xl font-bold text-gray-800">${score}/100</div>
+        <div class="text-xl font-semibold mt-2">Risque ${config.label}</div>
+      </div>
+    `;
+
+    // Blockers
+    const blockersBlock = document.getElementById('blockersBlock');
+    if (blockers.length > 0) {
+      blockersBlock.innerHTML = `
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded">
+          <div class="flex items-start gap-3">
+            <div class="text-red-500 text-2xl">⚠️</div>
+            <div>
+              <h3 class="font-semibold text-red-800 mb-2">Pratiques interdites détectées</h3>
+              ${blockers.map(b => `<p class="text-red-700">${escapeHtml(b)}</p>`).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      blockersBlock.innerHTML = '';
+    }
+
+    // Obligations block
+    const obligationsBlock = document.getElementById('obligationsBlock');
+    obligationsBlock.innerHTML = '<h3 class="text-xl font-semibold text-gray-800 mb-2">Vos obligations principales :</h3>';
+
+    if (riskLevel === 'high') {
+      obligationsBlock.innerHTML += `
+        <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+          <h4 class="font-semibold text-blue-900 mb-2">📋 Système de gestion des risques (Art. 9)</h4>
+          <p class="text-sm text-blue-800">Documentation continue des risques et mesures d'atténuation</p>
+        </div>
+        <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+          <h4 class="font-semibold text-blue-900 mb-2">📊 Gouvernance des données (Art. 10)</h4>
+          <p class="text-sm text-blue-800">Jeux de données pertinents, représentatifs et sans biais</p>
+        </div>
+        <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+          <h4 class="font-semibold text-blue-900 mb-2">📝 Documentation technique (Annexe IV)</h4>
+          <p class="text-sm text-blue-800">Dossier technique complet du système d'IA</p>
+        </div>
+        <div class="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+          <h4 class="font-semibold text-blue-900 mb-2">🔍 Enregistrement UE</h4>
+          <p class="text-sm text-blue-800">Inscription au registre européen des systèmes IA à haut risque</p>
+        </div>
+      `;
+    } else if (riskLevel === 'medium') {
+      obligationsBlock.innerHTML += `
+        <div class="p-4 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+          <h4 class="font-semibold text-yellow-900 mb-2">💬 Obligations de transparence (Art. 52)</h4>
+          <p class="text-sm text-yellow-800">Information claire aux utilisateurs sur l'usage de l'IA</p>
+        </div>
+      `;
+    } else {
+      obligationsBlock.innerHTML += `
+        <div class="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+          <h4 class="font-semibold text-green-900 mb-2">✅ Obligations limitées</h4>
+          <p class="text-sm text-green-800">Votre système présente un faible niveau de risque. Restez vigilant sur les évolutions réglementaires.</p>
+        </div>
+      `;
+    }
+
+    // Attach download handler
+    document.getElementById('downloadPdf').onclick = () => downloadReportPdf({ score, riskLevel, blockers });
+
+    // Request quote placeholder: open contact modal or simple alert
+    document.getElementById('requestQuote').onclick = () => {
+      const name = prompt("Nom contact pour la demande de devis :", state.formData.contactName || '');
+      if (name !== null) {
+        const email = prompt("Email :", state.formData.email || '');
+        const phone = prompt("Téléphone :", state.formData.phone || '');
+        alert("Merci — votre demande de devis a été enregistrée (simulation).");
+        state.formData.contactName = name || state.formData.contactName;
+        state.formData.email = email || state.formData.email;
+        state.formData.phone = phone || state.formData.phone;
+      }
+    };
+  }
+
+  // ----------------------------
+  // Generate a simple PDF report using jsPDF
+  // ----------------------------
+  async function downloadReportPdf({ score, riskLevel, blockers }) {
+    // jsPDF usage
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const company = state.formData.companyName || 'N/A';
+    const sector = state.formData.sector || 'N/A';
+    const aiType = state.formData.aiType || 'N/A';
+    const dateStr = new Date().toLocaleString('fr-FR');
+
+    doc.setFontSize(18);
+    doc.text("RIA Check & Go — Rapport de diagnostic", 14, 20);
+
+    doc.setFontSize(11);
+    doc.text(`Entreprise : ${company}`, 14, 36);
+    doc.text(`Secteur : ${sector}`, 14, 44);
+    doc.text(`Type d'IA : ${aiType}`, 14, 52);
+    doc.text(`Date : ${dateStr}`, 14, 60);
+
+    doc.setFontSize(12);
+    doc.text(`Score : ${score}/100 — Risque : ${riskLevel.toUpperCase()}`, 14, 78);
+
+    doc.setFontSize(11);
+    doc.text("Questions/Réponses :", 14, 92);
+    let y = 100;
+    diagnosticQuestions.forEach(q => {
+      const ans = state.formData.riskAnswers[q.id] || 'non renseigné';
+      const line = `- ${q.question} → ${ans}`;
+      doc.text(splitText(line, 180, doc).join('\n'), 14, y);
+      y += (Math.ceil(line.length / 80) * 6) + 4;
+      if (y > 260) {
+        doc.addPage();
+        y = 20;
+      }
+    });
+
+    if (blockers && blockers.length > 0) {
+      if (y > 260) { doc.addPage(); y = 20; }
+      doc.text("Blocages détectés :", 14, y+8);
+      y += 16;
+      blockers.forEach(b => {
+        doc.text(`- ${b}`, 14, y);
+        y += 8;
+        if (y > 260) { doc.addPage(); y = 20; }
+      });
+    }
+
+    // Save PDF
+    doc.save(`RIA-Check-Report-${company.replace(/\s+/g,'_') || 'report'}.pdf`);
+  }
+
+  // ----------------------------
+  // Helpers
+  // ----------------------------
+  function splitText(text, maxWidthPx, doc) {
+    // naive: jsPDF uses approx 7px per char at size 11 -> approximate break
+    const approxCharPerLine = Math.floor(maxWidthPx / 6.8);
+    const words = text.split(' ');
+    const lines = [];
+    let cur = '';
+    words.forEach(w => {
+      if ((cur + ' ' + w).trim().length > approxCharPerLine) {
+        lines.push(cur.trim());
+        cur = w;
+      } else {
+        cur += (cur ? ' ' : '') + w;
+      }
+    });
+    if (cur) lines.push(cur);
+    return lines;
+  }
+
+  function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, function(m) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);
+    });
+  }
+
+  // ----------------------------
+  // Render router
+  // ----------------------------
+  function render() {
+    if (state.currentScreen === 'diagnostic') {
+      renderDiagnostic();
+    } else if (state.currentScreen === 'results') {
+      renderResults();
+    }
+    // update nav active state (simple)
+    $all('.nav-btn').forEach(b => {
+      b.classList.remove('font-bold');
+      if (b.getAttribute('data-screen') === state.currentScreen) b.classList.add('font-bold');
+    });
+  }
+
+  // initial render
+  showScreen('home');
+  render();
+
+  // When view results is opened from diag flow, that code calls showScreen('results') and renderResults().
+  // But if user navigates manually to 'results', ensure renderResults has data:
+  $all('[data-screen="diagnostic"]').forEach(()=>{}); // noop but kept for structure
+
+  // Accessibility / quick bindings
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.getElementById('mobileMenu').classList.add('hidden');
+    }
+  });
+
+  </script>
 </body>
 </html>
